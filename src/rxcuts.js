@@ -91,7 +91,7 @@
     }
 
 
-    var keyStates = {};
+    var index = 0;
 
     var createRootObservable = function (filterRules) {
 
@@ -104,6 +104,7 @@
                     state: info.state,
                     timestamp: new Date().getTime()
                 };
+                index++;
             })
             .where(function(current) {
                 return filterRules(current.event);
@@ -114,6 +115,7 @@
                 info.holdMap = [];
                 info.translatedHoldMap = [];
                 info.lastActivity = current.state;
+                info.index = index;
 
                 for (i in keyStates) {
                     if (keyStates[i].state === "down") {
