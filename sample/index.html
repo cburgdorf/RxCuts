@@ -11,7 +11,7 @@
 RxCuts
         .observeShortcuts()
         .where(function(info){
-            return info.areKeysDown(["CTRL", "DOWN ARROW"]) && info.isProActive();
+            return info.areKeysDown(["CTRL", "DOWN ARROW"]) && info.isActive();
         })
         .subscribe(function(info){
             console.log("CTRL AND DOWN")
@@ -20,7 +20,7 @@ RxCuts
 RxCuts
         .observeShortcuts()
         .where(function(info){
-            return info.isProActive() && info.numberOfKeysDown(1);
+            return info.isActive() && info.numberOfKeysDown(1);
         })
         .where(function(info){
             return info.areKeysDown(["DOWN ARROW"])

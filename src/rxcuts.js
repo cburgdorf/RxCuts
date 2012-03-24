@@ -22,8 +22,15 @@
             };
     }
 
+    function isArray(a) {
+        return Object.prototype.toString.apply(a) === '[object Array]';
+    }
+
     function ShortcutInfo() { };
     ShortcutInfo.prototype.areKeysDown = function (keys) {
+
+        if(!isArray(keys)) throw "parameter keys should be an array of keys"
+
         var shortcutInfo = this;
         var returnInfo;
         Rx.Observable
@@ -42,8 +49,12 @@
         return this.holdMap.length === number;
     };
 
-    ShortcutInfo.prototype.isProActive = function () {
+    ShortcutInfo.prototype.isActive = function () {
         return this.lastActivity === "down";
+    };
+
+    ShortcutInfo.prototype.isPassive = function(){
+        return !this.isActive();
     };
 
     var keyTranslationMap = {
@@ -72,14 +83,22 @@
         };
     };
 
-    var observableKeyDowns = Rx.Observable.fromEvent(window, 'keydown').select(keyCodeSelectorFactory("down"));
-    var observableKeyUps = Rx.Observable.fromEvent(window, 'keyup').select(keyCodeSelectorFactory("up"));
+    function getInputStreams(){
+        return {
+            observableKeyDowns : RxCuts.ObservableKeydown || Rx.Observable.fromEvent(window, 'keydown'),
+            observableKeyUps :RxCuts.ObservableKeyup || Rx.Observable.fromEvent(window, 'keyup')
+        }
+    }
+
 
     var keyStates = {};
 
     var createRootObservable = function (filterRules) {
+
+        var inputStreams = getInputStreams();
+
         return Rx.Observable
-            .merge(null, observableKeyDowns, observableKeyUps)
+            .merge(null, inputStreams.observableKeyDowns.select(keyCodeSelectorFactory("down")), inputStreams.observableKeyUps.select(keyCodeSelectorFactory("up")))
             .doAction(function(info) {
                 keyStates[info.keyCode] = {
                     state: info.state,
@@ -105,6 +124,11 @@
                 return info;
             });
 
+    };
+
+    //Make current state resetable (for testing)
+    RxCuts.resetState = function(){
+        keyStates = {};
     };
 
     RxCuts.observeShortcuts = function (filterRules) {
