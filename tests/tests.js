@@ -91,6 +91,29 @@ test('raises "CTRL+DOWN ARROW event actively only', function() {
     ok(methodFiredCount === 1, "raised event " + methodFiredCount + " times");
 })
 
+test('raises "CTRL+DOWN ARROW event actively with "inOrder" beeing used', function() {
+
+    RxCuts.resetState();
+    RxCuts.ObservableKeydown = new Rx.Subject();
+    RxCuts.ObservableKeyup = new Rx.Subject();
+
+    var methodFiredCount = 0;
+    RxCuts.observeShortcuts()
+        .where(function(shortcut){
+            return shortcut.areKeysDown(["CTRL", "DOWN ARROW"],true)
+                && shortcut.numberOfKeysDown(2)
+                && shortcut.isActive();
+        })
+        .subscribe(function(){
+            methodFiredCount++;
+        });
+
+    RxCuts.ObservableKeydown.onNext({keyCode : 17, target: {tagName: "window"}})
+    RxCuts.ObservableKeydown.onNext({keyCode : 40, target: {tagName: "window"}})
+
+    ok(methodFiredCount === 1, "raised event " + methodFiredCount + " times");
+})
+
 test('raises "CTRL+DOWN ARROW event passively only', function() {
 
     RxCuts.resetState();
@@ -116,7 +139,7 @@ test('raises "CTRL+DOWN ARROW event passively only', function() {
     ok(methodFiredCount === 1, "raised event " + methodFiredCount + " times");
 })
 
-test('Doesnt raise "CTRL+DOWN ARROW event" if there was a key in between', function() {
+test('Does not raise "CTRL+DOWN ARROW event" if there is a key in between and "inOrder" flag is beeing used', function() {
 
     RxCuts.resetState();
     RxCuts.ObservableKeydown = new Rx.Subject();
@@ -125,7 +148,7 @@ test('Doesnt raise "CTRL+DOWN ARROW event" if there was a key in between', funct
     var methodFiredCount = 0;
     RxCuts.observeShortcuts()
         .where(function(shortcut){
-            return shortcut.areKeysDown(["CTRL", "DOWN ARROW"])
+            return shortcut.areKeysDown(["CTRL", "DOWN ARROW"], true)
                 && shortcut.numberOfKeysDown(2);
         })
         .subscribe(function(){

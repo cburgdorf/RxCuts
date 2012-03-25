@@ -1,6 +1,7 @@
 (function () {
 
-    var RxCuts = window.RxCuts = { FilterRules: {} };
+    var RxCuts = window.RxCuts = { FilterRules: {} },
+        index = 0, keyStates = {};
 
     RxCuts.FilterRules.NO_CONTROLS = function (event) {
         var tagName = (event.target || event.srcElement).tagName;
@@ -27,22 +28,44 @@
     }
 
     function ShortcutInfo() { };
-    ShortcutInfo.prototype.areKeysDown = function (keys) {
+    ShortcutInfo.prototype.areKeysDown = function (keys, matchesOrder) {
 
         if(!isArray(keys)) throw "parameter keys should be an array of keys"
 
-        var shortcutInfo = this;
-        var returnInfo;
+        var shortcutInfo = this,
+            returnInfo,
+            currentIndex = index;
         Rx.Observable
             .fromArray(keys)
-            .aggregate(true, function (acc, i) {
-                var holdMap = typeof i === "string" ? shortcutInfo.translatedHoldMap : shortcutInfo.holdMap;
-                return !acc ? acc : holdMap.indexOf(i) > -1;
+            .aggregate({matchesAll: true, lastIndex: currentIndex, isInOrder: true, isFirst : true}, function (acc, i) {
+
+                //The lookup array can be either an array of keycodes or keynames depending on the input
+                var holdMap = typeof i === "string" ? shortcutInfo.translatedHoldMap : shortcutInfo.holdMap,
+                    //the index of the key found in the lookup array
+                    indexInHoldMap = holdMap.indexOf(i),
+                    //no matter if we started with the keycode or the name, let's further use the keycode internally
+                    keyCode = shortcutInfo.holdMap[indexInHoldMap],
+                    //let's get the "event index" for the specific keycode
+                    indexOfKey = keyCode !== undefined ? shortcutInfo.fullmap[keyCode].index : -1;
+
+                //keep it false if it already was false, otherwise set it false if the key wasn't found in the holdmap
+                acc.matchesAll = !acc.matchesAll ? false : indexInHoldMap > -1;
+
+                //keep it false if it already was false, otherwise set it false if either
+                //the key wasn't found in holdmap at all
+                //or the "event index" doesn't directly follow the preceding event index
+                acc.isInOrder = (!acc.isInOrder || indexInHoldMap === -1) ? false :
+                                acc.isFirst ? true : indexOfKey === acc.lastIndex + 1;
+
+                //save the event index of the matched key as lastIndex for the next aggregation step
+                acc.lastIndex = indexOfKey;
+                acc.isFirst = false;
+                return acc;
             })
             .subscribe(function (info) {
                 returnInfo = info;
             });
-        return returnInfo;
+        return !matchesOrder ? returnInfo.matchesAll : returnInfo.matchesAll && returnInfo.isInOrder;
     };
 
     ShortcutInfo.prototype.numberOfKeysDown = function (number) {
@@ -90,9 +113,6 @@
         }
     }
 
-
-    var index = 0;
-
     var createRootObservable = function (filterRules) {
 
         var inputStreams = getInputStreams();
@@ -100,11 +120,12 @@
         return Rx.Observable
             .merge(null, inputStreams.observableKeyDowns.select(keyCodeSelectorFactory("down")), inputStreams.observableKeyUps.select(keyCodeSelectorFactory("up")))
             .doAction(function(info) {
+                index++;
                 keyStates[info.keyCode] = {
                     state: info.state,
-                    timestamp: new Date().getTime()
+                    timestamp: new Date().getTime(),
+                    index: index
                 };
-                index++;
             })
             .where(function(current) {
                 return filterRules(current.event);
@@ -115,7 +136,6 @@
                 info.holdMap = [];
                 info.translatedHoldMap = [];
                 info.lastActivity = current.state;
-                info.index = index;
 
                 for (i in keyStates) {
                     if (keyStates[i].state === "down") {
