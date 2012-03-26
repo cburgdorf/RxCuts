@@ -39,7 +39,7 @@
             .fromArray(keys)
             .aggregate({matchesAll: true, lastIndex: currentIndex, isInOrder: true, isFirst : true}, function (acc, i) {
 
-                //The lookup array can be either an array of keycodes or keynames depending on the input
+                //The lookup array can be either an array of keycodes or keynames (or mixed) depending on the input
                 var holdMap = typeof i === "string" ? shortcutInfo.translatedHoldMap : shortcutInfo.holdMap,
                     //the index of the key found in the lookup array
                     indexInHoldMap = holdMap.indexOf(i),
