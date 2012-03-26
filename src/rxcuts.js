@@ -30,22 +30,22 @@
     function ShortcutInfo() { };
     ShortcutInfo.prototype.areKeysDown = function (keys, matchesOrder) {
 
-        if(!isArray(keys)) throw "parameter keys should be an array of keys"
+        if (!isArray(keys)) throw "parameter keys should be an array of keys";
 
         var shortcutInfo = this,
             returnInfo,
             currentIndex = index;
         Rx.Observable
             .fromArray(keys)
-            .aggregate({matchesAll: true, lastIndex: currentIndex, isInOrder: true, isFirst : true}, function (acc, i) {
+            .aggregate({ matchesAll: true, lastIndex: currentIndex, isInOrder: true, isFirst: true }, function (acc, i) {
 
                 //The lookup array can be either an array of keycodes or keynames depending on the input
                 var holdMap = typeof i === "string" ? shortcutInfo.translatedHoldMap : shortcutInfo.holdMap,
-                    //the index of the key found in the lookup array
+                //the index of the key found in the lookup array
                     indexInHoldMap = holdMap.indexOf(i),
-                    //no matter if we started with the keycode or the name, let's further use the keycode internally
+                //no matter if we started with the keycode or the name, let's further use the keycode internally
                     keyCode = shortcutInfo.holdMap[indexInHoldMap],
-                    //let's get the "event index" for the specific keycode
+                //let's get the "event index" for the specific keycode
                     indexOfKey = keyCode !== undefined ? shortcutInfo.fullmap[keyCode].index : -1;
 
                 //keep it false if it already was false, otherwise set it false if the key wasn't found in the holdmap
@@ -76,7 +76,7 @@
         return this.lastActivity === "down";
     };
 
-    ShortcutInfo.prototype.isPassive = function(){
+    ShortcutInfo.prototype.isPassive = function () {
         return !this.isActive();
     };
 
@@ -106,11 +106,11 @@
         };
     };
 
-    function getInputStreams(){
+    function getInputStreams() {
         return {
-            observableKeyDowns : RxCuts.ObservableKeydown || Rx.Observable.fromEvent(window, 'keydown'),
-            observableKeyUps :RxCuts.ObservableKeyup || Rx.Observable.fromEvent(window, 'keyup')
-        }
+            observableKeyDowns: RxCuts.ObservableKeydown || Rx.Observable.fromEvent(window, 'keydown'),
+            observableKeyUps: RxCuts.ObservableKeyup || Rx.Observable.fromEvent(window, 'keyup')
+        };
     }
 
     var createRootObservable = function (filterRules) {
@@ -119,7 +119,7 @@
 
         return Rx.Observable
             .merge(null, inputStreams.observableKeyDowns.select(keyCodeSelectorFactory("down")), inputStreams.observableKeyUps.select(keyCodeSelectorFactory("up")))
-            .doAction(function(info) {
+            .doAction(function (info) {
                 index++;
                 keyStates[info.keyCode] = {
                     state: info.state,
@@ -127,10 +127,10 @@
                     index: index
                 };
             })
-            .where(function(current) {
+            .where(function (current) {
                 return filterRules(current.event);
             })
-            .select(function(current) {
+            .select(function (current) {
                 var info = new ShortcutInfo();
                 info.fullmap = keyStates;
                 info.holdMap = [];
@@ -149,7 +149,7 @@
     };
 
     //Make current state resetable (for testing)
-    RxCuts.resetState = function(){
+    RxCuts.resetState = function () {
         keyStates = {};
     };
 
