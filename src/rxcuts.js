@@ -158,4 +158,4 @@
         return createRootObservable(filterRules);
     };
 
-})()
+})();
