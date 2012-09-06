@@ -108,8 +108,8 @@
 
     function getInputStreams() {
         return {
-            observableKeyDowns: RxCuts.ObservableKeydown || Rx.Observable.fromEvent(window, 'keydown'),
-            observableKeyUps: RxCuts.ObservableKeyup || Rx.Observable.fromEvent(window, 'keyup')
+            observableKeyDowns: RxCuts.ObservableKeydown || Rx.Observable.fromEvent(document, 'keydown'),
+            observableKeyUps: RxCuts.ObservableKeyup || Rx.Observable.fromEvent(document, 'keyup')
         };
     }
 
